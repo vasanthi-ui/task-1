@@ -1,0 +1,57 @@
+import pandas as pd
+
+data = pd.read_csv('/content/sample_data/KaggleV2-May-2016.csv')
+print("missing values per column:")
+df = pd.DataFrame(data)
+df.columns=df.columns.str.strip().str.lower().str.replace(' ', '_').str.replace('-','_')
+print(df.isnull().sum())
+print("DataFrame columns:", df.columns)
+
+duplicate_count=df.duplicated().sum()
+print("number of duplicate rows:",duplicate_count)
+df.drop_duplicates(inplace=True)
+df['scheduledday'] = pd.to_datetime(df['scheduledday'],dayfirst=True)
+df['appointmentday'] = pd.to_datetime(df['appointmentday'],dayfirst=True)
+df['scheduledday'] = df['scheduledday'].dt.strftime('%d-%m-%y')
+df['appointmentday'] = df['appointmentday'].dt.strftime('%d-%m-%y')
+df['patientid']=df['patientid'].astype(str)
+print(df.dtypes)
+country_column_name = 'country'
+
+if country_column_name in df.columns:
+    df[country_column_name] = df[country_column_name].astype(str).str.title().str.strip()
+    df[country_column_name] = df[country_column_name].replace({
+        'Usa':'USA',
+        'United states':'USA',
+        'Uk':'UK',
+        'United Kingdom':'UK'
+    })
+else:
+    print(f"Warning: Column '{country_column_name}' not found in the DataFrame. Skipping country processing.")
+
+gender_column_name = 'gender' 
+if gender_column_name in df.columns:
+    df[gender_column_name] = df[gender_column_name].astype(str).str.lower().str.strip()
+    df[gender_column_name] = df[gender_column_name].replace({
+        'male':'Male',
+        'female':'Female',
+        'm':'Male',
+        'f':'Female',
+        'unknown':'Unknown'
+    })
+    df[gender_column_name].fillna('Unknown', inplace=True) 
+else:
+     print(f"Warning: Column '{gender_column_name}' not found in the DataFrame. Skipping gender processing.")
+
+
+age_column_name = 'age' 
+if age_column_name in df.columns:
+    df[age_column_name].fillna(df[age_column_name].mean(), inplace=True)
+else:
+    print(f"Warning: Column '{age_column_name}' not found in the DataFrame. Skipping age processing.")
+
+
+print("\nMissing values after cleaning:")
+print(df.isnull().sum())
+
+df.to_csv('cleaned_data.csv', index=False)
